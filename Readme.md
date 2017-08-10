@@ -11,11 +11,12 @@
     AllCopiesGTEOlderTriggerOrNotExists (Триггер по дате изменения группы файлов)
     FileNotExistsTrigger (Файла не сществует)
     FileExistsTrigger (Файл существует)
-    RegularExpressionFolderNotExits (Каталог с маской не существует)
-    RegularExpressionFolderExits (Католог с маской существует)
-    RegularExpressionFileNotExits(Файл(Каталог) с маской не существует)
-    RegularExpressionFileExits (Файл(Каталог) с маской существует)
     AllWaysTrueTrigger (Тригер на запуск приложения)
+    RegularExpressionFolderOrFileNotExits (Не найдено файла или подкаталога , в каталоге по регулярному вырожению )
+    RegularExpressionFolderOrFileExits (Найден файла или подкаталога , в каталоге по регулярному вырожению )
+    FirstFileLogOrderByDayItemFoundTrigger (Найдено вырожение в файле, который первый(последний) в списке по маске)
+    FirstFileLogOrderByDayItemNotFoundTrigger (Не найдено вырожение в файле, который первый(последний) в списке по маске)
+    LTEBaitInFirstDayOrderedFileTrigger (В первовом(последненем) файле, отфильтрованным по маске, меньше или равно байт )
 
 ##### Специфика применения
 1) Запуск через расписание задач 
@@ -27,4 +28,5 @@
 
 2) В зависимости от типа триггера меняются и параматры для триггера 
 
-[Ссылка на программу(прототип)](https://yadi.sk/d/5_ImhJiq3LkuYE)
+[Ссылка на программу(0.11)](https://yadi.sk/d/8aMIovxZ3LtN2j)
+[Ссылки на релизы](https://disk.yandex.ru/client/disk/SISTYLE)

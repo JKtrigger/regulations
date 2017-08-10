@@ -6,12 +6,13 @@
 """
 
 import smtplib
+from ConfigParser import ConfigParser
 from datetime import datetime
+from email import encoders
+
+from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
-from email.MIMEBase import MIMEBase
-from email import encoders
-from ConfigParser import ConfigParser
 
 # -----------------------------------------------------------------------------
 # Константы

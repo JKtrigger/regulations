@@ -4,79 +4,59 @@
 """
     Приложние
 """
-import os
+import sys
 from config_API import ConfigAPI
 from trigger import (
     GTEDateModifyTrigger, AllCopiesGTEOlderTriggerOrNotExists,
     FileNotExistsTrigger, FileExistsTrigger,
-    RegularExpressionFolderNotExits, RegularExpressionFolderExits,
-    RegularExpressionFileNotExits, RegularExpressionFileExits,
-    AllWaysTrueTrigger
+    RegularExpressionFolderOrFileNotExits, RegularExpressionFolderOrFileExits,
+    AllWaysTrueTrigger, FirstFileLogOrderByDayItemFoundTrigger,
+    FirstFileLogOrderByDayItemNotFoundTrigger,
+    LTEBaitInFirstDayOrderedFileTrigger
 )
-from datetime import datetime
+
+
+def get_class(class_name):
+    """
+    Функция хелпер. Возвращает класс по имени класса
+
+    :param class_name: строка имя класса
+    :return: инстанс класса
+    """
+    # TODO отдельный exception для не найденных
+    found_class = globals()[class_name]
+    if found_class in [
+        GTEDateModifyTrigger, AllCopiesGTEOlderTriggerOrNotExists,
+        FileNotExistsTrigger, FileExistsTrigger,
+        RegularExpressionFolderOrFileNotExits,
+        RegularExpressionFolderOrFileExits,
+        AllWaysTrueTrigger, FirstFileLogOrderByDayItemFoundTrigger,
+        FirstFileLogOrderByDayItemNotFoundTrigger,
+        LTEBaitInFirstDayOrderedFileTrigger
+    ]:
+        return found_class
 
 
 class Application(object):
     """
     Само приложение
     """
+    sys.stdout.write(u"start application \n")
     file_name = "mail_sender.conf"
+    sys.stdout.write(u"initialisation conf \n")
     conf = ConfigAPI(file_name)
+    sys.stdout.write(u"read conf\n")
     conf.read_config()
 
     for task in iter(conf.tasks):
-        options = {
-            'message_title': task.project_name,
-            'message_body': task.trigger_event,
-            'from_address': task.from_address,
-            'to_address': task.to_address,
-            'SMTP_host': task.smtp_host,
-            'SMTP_port': task.smtp_port,
-            'password': task.password
-        }
-        if task.trigger_type == 'GTEDateModifyTrigger':
-            Event = GTEDateModifyTrigger(
-                task.triggered_file,
-                datetime.fromtimestamp(
-                    os.path.getmtime(
-                        task.triggered_file)).strftime('%Y-%m-%d'),
-                int(task.gte_days),
-                **options
-            )
-        if task.trigger_type == 'AllCopiesGTEOlderTriggerOrNotExists':
-            Event = AllCopiesGTEOlderTriggerOrNotExists(
-                task.path,
-                task.mask,
-                int(task.gte_days),
-                **options
-            )
-        if task.trigger_type == 'FileNotExistsTrigger':
-            Event = FileNotExistsTrigger(task.path_file_name, **options)
-
-        if task.trigger_type == 'FileExistsTrigger':
-            Event = FileExistsTrigger(task.path_file_name, **options)
-
-        if task.trigger_type == 'RegularExpressionFolderNotExits':
-            Event = RegularExpressionFolderNotExits(
-                task.path, task.mask, **options)
-
-        if task.trigger_type == 'RegularExpressionFolderExits':
-            Event = RegularExpressionFolderExits(
-                task.path, task.mask, **options)
-
-        if task.trigger_type == 'RegularExpressionFileNotExits':
-            Event = RegularExpressionFileNotExits(
-                task.path, task.mask, **options)
-
-        if task.trigger_type == 'RegularExpressionFileExits':
-            Event = RegularExpressionFileExits(task.path, task.mask, **options)
-
-        if task.trigger_type == 'AllWaysTrueTrigger':
-            Event = AllWaysTrueTrigger(**options)
-
+        sys.stdout.write(u"{} running \n".format(task.name))
+        event_type = get_class(task.trigger_type)
+        Event = event_type(**task.options)
         Event.run()
+        sys.stdout.write(u"{} done \n".format(task.name))
 
 
 if __name__ == "__main__":
-    u""" Зупуск приложения """
+    u""" Запуск приложения """
     Application_instance = Application()
+
