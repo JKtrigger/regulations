@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-    Приложние
+    Запуск приложения
 """
 import sys
+
 from config_API import ConfigAPI
 from trigger import (
     GTEDateModifyTrigger, AllCopiesGTEOlderTriggerOrNotExists,
@@ -39,7 +40,10 @@ def get_class(class_name):
 
 class Application(object):
     """
-    Само приложение
+    Запуск приложения
+
+    Чтение настроек из файла настроек
+    и последовательный запуск заданий.
     """
     sys.stdout.write(u"start application \n")
     file_name = "mail_sender.conf"
