@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 """
-Обработка API ConfigParser
+    Инстанцирование задач из файла настроек
 """
+
 import codecs
 import os.path
 import sys
@@ -14,7 +16,8 @@ UTF_WITH_BOM = 'utf-8-sig'
 
 
 class ConfigAPI(object):
-    """ API для создания триггеров """
+    """ Фабрика для инстанцирования триггеров
+    """
 
     config_parser = ConfigParser()
     ACTIVE_TASK = 'active_task'

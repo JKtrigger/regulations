@@ -24,9 +24,9 @@
 # RegularExpressionFolderOrFileExits (
 #    Найден файла или подкаталога , в каталоге по регулярному вырожению )
 # FirstFileLogOrderByDayItemFoundTrigger (
-#    Найдено вырожение в файле, который первый(последний) в списке по маске)
+#   Найдено регулярное вырожение в файле.
 # FirstFileLogOrderByDayItemNotFoundTrigger (
-#    Не найдено вырожение в файле, который первый(последний) в списке по маске)
+#    Не найдено регулярное вырожение в файле.
 # LTEBaitInFirstDayOrderedFileTrigger (
 #    В первовом(последненем) файле, отфильтрованным по маске,
 #    меньше или равно байт )
@@ -34,16 +34,16 @@
 #------------------------------------------------------------------------------
 # Сообщения (Рекомендация)
 #------------------------------------------------------------------------------
-# Для отправки сообщений используется SMTP.
-# В заголоовк идет параметр  project_name
+# Для отправки сообщений используется smtp.
+# В заголовок идет параметр project_name
 # Рекомендую указывать
 # message_title = ИМЯ ПРОЕКТА ИМЯ КОМПЬЮТЕРА ТИП СОБЫТИЯ
 # message_body = ОПИСАНИЕ И ССЫЛКА НА ДОСТУП
 #
 # from_address = n@u-c.su (Почта отправителя)
 # to_address = n@u-c.su (Почта получателя)
-# SMTP_host = mail.u-c.su (smpt host почты)
-# SMTP_port = 587 (smtp port почты )
+# smtp_host = mail.u-c.su (smpt host почты)
+# smtp_port = 587 (smtp port почты )
 # password = PASS (Пароль)
 
 
@@ -68,8 +68,8 @@
 # Общие настройки почты
 #   from_address = nalimovn@u-c.su ()
 #   to_address = nalimovn@u-c.su
-#   SMTP_host = mail.u-c.su
-#   SMTP_port = 587
+#   smtp_host = mail.u-c.su
+#   smtp_port = 587
 #   password = 4O5i76C9
 
 

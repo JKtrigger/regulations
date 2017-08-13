@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 """
 Интерфейс для обработки событий
 """
+
 import codecs
 import os
 import re
@@ -195,9 +197,6 @@ class GTEDateModifyTrigger(BaseTriggerEvent):
                 date_modify, YEAR_MONTH_DAYS_ORDER)
         ).days >= self.older_days
 
-    def run(self):
-        super(GTEDateModifyTrigger, self).run()
-
 
 class FileNotExistsTrigger(BaseTriggerEvent):
     """
@@ -219,9 +218,6 @@ class FileNotExistsTrigger(BaseTriggerEvent):
                 self.file_name
             )
         )
-
-    def run(self):
-        super(FileNotExistsTrigger, self).run()
 
 
 class FileExistsTrigger(FileNotExistsTrigger):
@@ -252,9 +248,6 @@ class RegularExpressionFolderOrFileNotExits(BaseTriggerEvent):
             re.match(self.mask, folder, re.UNICODE)
             for folder in os.listdir(self.path)
         )
-
-    def run(self):
-        super(RegularExpressionFolderOrFileNotExits, self).run()
 
 
 class RegularExpressionFolderOrFileExits(
