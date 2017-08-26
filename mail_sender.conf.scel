@@ -5,8 +5,6 @@
 # события относятся к файловой системе. Это существование
 # файла или группы файлов, по точному соотвествию или маске.
 #
-# TODO Переписать описание
-# TODO Сделать exe Арихив
 
 #------------------------------------------------------------------------------
 # Типы триггеров
@@ -166,6 +164,12 @@
 [active_task]
 task1 = LTEBaitInFirstDayOrderedFileTrigger
 
+[export section mail]
+from_address =
+to_address =
+smtp_host =
+smtp_port =
+password =
 
 [проверка LTEBaitInFirstDayOrderedFileTrigger]
 
@@ -175,12 +179,7 @@ lte_baits = 93300
 order = DESC
 
 trigger_type = LTEBaitInFirstDayOrderedFileTrigger
-
 message_title = LTEBaitInFirstDayOrderedFileTrigger
 message_body = В самом новом файле бекапа мало байт !!!
-
-from_address = nalimovn@u-c.su
-to_address = nalimovn@u-c.su
-smtp_host = mail.u-c.su
-smtp_port = 587
-password = 4O5i76C9
+# Секция экспорта параметров из секций
+export = export section mail
