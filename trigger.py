@@ -11,15 +11,20 @@ import re
 import smtplib
 import sys
 from datetime import datetime
-from email import encoders
 
-from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
+
+from logger.logger import Logger
 
 CP1251 = 'cp1251'
 YEAR_MONTH_DAYS_ORDER = '%Y-%m-%d'
 FLAG_READ_FILE = 'r'
+
+
+class SMTPError(Exception):
+    """ Ошибка SMTP """
+    pass
 
 
 class Trigger(object):
@@ -28,10 +33,13 @@ class Trigger(object):
 
     Если событие правда, то должно приходить сообшение
     """
-
     DESC = 'DESC'
     ACS = 'ASC'
     ORDERING_TYPES = [ACS, DESC]
+    log = Logger(u"{message:<50s}")
+    error_handle = Logger.ERROR
+    warning_handler = Logger.WARNING
+    info_handler = Logger.INFO
 
     def event(self):
         """ проверка события """
@@ -46,8 +54,7 @@ class Trigger(object):
         raise NotImplemented
 
     def run(self):
-        if self.pre_event_check():
-            return
+        self.pre_event_check()
         if not self.event():
             return
         self.send_mail()
@@ -88,48 +95,63 @@ class BaseTriggerEvent(Trigger):
         self.smtp_host = smtp_host
         self.smtp_port = smtp_port
         self.password = password
+        self.message_container = MIMEMultipart()
 
     def pre_event_check(self):
         """ Проверка подключения """
         try:
             self.smtp_port = int(self.smtp_port)
-        except ValueError:
-            sys.stdout.write("Cannot set port {}".format(self.smtp.port))
-            return True
+        except (ValueError, AttributeError):
+            message = (
+                u"Ошибка номера порта. Порт "
+                u"{} задан не верно.".format(
+                    self.smtp_port
+                )
+            )
+            self.log.row_message(level=self.error_handle, message=message)
+            sys.stdout.write(message)
+            raise SMTPError
 
         try:
             self.SERVER = smtplib.SMTP(self.smtp_host, int(self.smtp_port))
-
         except Exception as Error:
-            # TODO Вынести в отдельный Exceptions
-            # TODO Вынести в лог 0.2
-            sys.stdout.write("Server cannot initialised smtp connection\n")
+            message = u"Не удалось подключиться к серверу "
+            sys.stdout.write(message)
             sys.stdout.write(Error.message)
-            return True
+            self.log.row_message(level=self.error_handle, message=message)
+            self.log.row_message(
+                level=self.error_handle, message=Error.message)
+            raise SMTPError
 
         try:
             self.SERVER.starttls()
         except Exception as Error:
-            sys.stdout.write("Server does not support methods")
+            message = u"Сервер не подддерживает метод "
+            sys.stdout.write(message)
             sys.stdout.write(Error.message)
-            return True
+            self.log.row_message(level=self.error_handle, message=message)
+            raise SMTPError
 
         try:
             self.SERVER.login(self.from_address, self.password)
         except Exception as Error:
-            sys.stdout.write("Login or password incorrect")
+            message = u"Неверный логин или пароль"
+            sys.stdout.write(message)
             sys.stdout.write(Error.message)
-            return True
+            self.log.row_message(level=self.error_handle, message=message)
+            self.log.row_message(
+                level=self.error_handle, message=Error.message)
+            raise SMTPError
 
     def run(self):
         super(BaseTriggerEvent, self).run()
 
     def send_mail(self):
-        message_container = MIMEMultipart()
-        message_container[self.FROM] = self.from_address
-        message_container[self.TO] = self.to_address
-        message_container[self.SUBJECT] = self.message_title
-        message_container.attach(
+
+        self.message_container[self.FROM] = self.from_address
+        self.message_container[self.TO] = self.to_address
+        self.message_container[self.SUBJECT] = self.message_title
+        self.message_container.attach(
             MIMEText(
                 self.message_body,
                 self.CONTENT_TYPE_PLAIN,
@@ -139,25 +161,9 @@ class BaseTriggerEvent(Trigger):
         self.SERVER.sendmail(
             self.from_address,
             self.to_address,
-            message_container.as_string()
+            self.message_container.as_string()
         )
         self.SERVER.quit()
-
-    def add_attach_email(self, path_filename):
-        """ добавление вложения  """
-        attachment = open(path_filename, 'rb')
-        message_attach = MIMEBase(
-            self.CONTENT_TYPE_APPLICATION,
-            self.SUB_TYPE_CONTENT_TYPE_OCTET_STREAM
-        )
-        message_attach.set_payload(attachment.read())
-        encoders.encode_base64(message_attach)
-        message_attach.add_header(
-            self.PRESENTATION_INFORMATION_CONTENT_DISPOSITION,
-            'attachment; filename= {}'.format(path_filename)
-        )
-        self.MESSAGE_CONTAINER.attach(message_attach)
-
 
 class GTEDateModifyTrigger(BaseTriggerEvent):
     """ Триггер по дате изменения
@@ -170,10 +176,15 @@ class GTEDateModifyTrigger(BaseTriggerEvent):
         try:
             self.older_days = int(older_days)
         except ValueError:
-
             self.older_days = 1
-            sys.stdout.write("older_day not int value \n")
-            sys.stdout.write("set default 1 day \n")
+            self.log.row_message(
+                level=self.warning_handler,
+                message=u"Колчество дней задано не верно"
+            )
+            self.log.row_message(
+                level=self.warning_handler,
+                message=u"Колчество дней изменено на 1 день"
+            )
 
         self.path = path
         self.file_name = file_name
@@ -185,7 +196,10 @@ class GTEDateModifyTrigger(BaseTriggerEvent):
         """
         full_path = os.path.join(self.path, self.file_name )
         if not os.path.exists(full_path):
-            sys.stdout.write("File not founded \n")
+            self.log.row_message(
+                level=self.warning_handler,
+                message=u"Файл не найден"
+            )
             return
 
         date_modify = datetime.fromtimestamp(
@@ -288,8 +302,14 @@ class AllCopiesGTEOlderTriggerOrNotExists(BaseTriggerEvent):
             self.older_days = int(older_days)
         except ValueError:
             self.older_days = 1
-            sys.stdout.write("older_day not int value \n")
-            sys.stdout.write("set default 1 day \n")
+            self.log.row_message(
+                level=self.warning_handler,
+                message=u"Колчество дней задано не верно"
+            )
+            self.log.row_message(
+                level=self.warning_handler,
+                message=u"Колчество дней изменено на 1 день"
+            )
 
         super(
             AllCopiesGTEOlderTriggerOrNotExists, self).__init__(**kwargs)
@@ -301,7 +321,7 @@ class AllCopiesGTEOlderTriggerOrNotExists(BaseTriggerEvent):
             if item:
                 name_file = item.group(0)
                 full_path = os.path.join(self.path, name_file)
-
+                
                 str_time = datetime.fromtimestamp(
                     os.path.getmtime(full_path)).strftime(
                     YEAR_MONTH_DAYS_ORDER)
@@ -309,6 +329,11 @@ class AllCopiesGTEOlderTriggerOrNotExists(BaseTriggerEvent):
                     datetime.now() - datetime.strptime(str_time,
                                                        YEAR_MONTH_DAYS_ORDER)
                 ).days
+
+                self.log.row_message(
+                    level=self.info_handler,
+                    message=u"Файлу:{} Дней:{}".format(name_file, days_diff)
+                )
                 diff_all_files.append(days_diff)
         if all(diff >= self.older_days for diff in diff_all_files):
             return True
@@ -345,6 +370,10 @@ class FirstFileLogOrderByDayItemFoundTrigger(BaseTriggerEvent):
         return self.search_text_by_patter(**kwargs)
 
     def search_text_by_patter(self, first_file):
+        self.log.row_message(
+            level=self.info_handler,
+            message=u"Поиск вырожения в файле {}".format(first_file)
+        )
         with codecs.open(
                 os.path.join(
                     self.path,
@@ -361,7 +390,14 @@ class FirstFileLogOrderByDayItemFoundTrigger(BaseTriggerEvent):
 
     def event(self):
         if self.order not in self.ORDERING_TYPES:
-            sys.stdout.write("Ordering not set.\n Set Order ASC or DESC")
+            message = (
+                u"Не задан тип очередности (ASC, DESC)"
+            )
+            self.log.row_message(
+                level=self.warning_handler,
+                message=message
+            )
+            sys.stdout.write(message+'\r\n')
             return
         if self.order == self.DESC:
             self.order = True
@@ -401,6 +437,10 @@ class FirstFileLogOrderByDayItemNotFoundTrigger(
     """
 
     def search_text_by_patter(self, first_file):
+        self.log.row_message(
+            level=self.info_handler,
+            message=u"Поиск вырожения в файле {}".format(first_file)
+        )
         with codecs.open(
                 os.path.join(
                     self.path,
@@ -446,6 +486,12 @@ class LTEBaitInFirstDayOrderedFileTrigger(
         self.lte_baits = lte_baits
 
     def check_bait_len(self, first_file):
+        # TODO сделать обвертку для сообщений
+        self.log.row_message(
+            level=self.info_handler,
+            message=u"Поиск вырожения в файле {}".format(first_file)
+        )
+
         return os.stat(
             os.path.join(self.path, first_file)
         ).st_size <= int(self.lte_baits)
